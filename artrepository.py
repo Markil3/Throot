@@ -42,3 +42,5 @@ leaf = SpriteImage(bytearray([128,1,1,1,3,3,3,71,135,15,15,31,63,255,255,255,255
 
 UNDERGROUND_OBSTACLES = [skull, pizza, boulder, ball, steve, spaveinv, spaceinv2, mathroot, robot, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritotoobstacle]
 OVERGROUND_OBSTACLES = [leaf]
+
+OBSTACLES = UNDERGROUND_OBSTACLES + OVERGROUND_OBSTACLES
