@@ -1,4 +1,4 @@
-from collections.namedtuple
+from collections import namedtuple
 
 SpriteImage = namedtuple("SpriteImage", ["image", "collision", "width", "height"])
 
@@ -130,7 +130,7 @@ leaf = SpriteImage(
     16
 )
 
-UNDERGROUND_OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritotoobstacle]
-OVERGROUND_OBSTACLES = [spaveinv, spaceinv2, leaf]
+UNDERGROUND_OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritoobstacle]
+OVERGROUND_OBSTACLES = [spaceinv, spaceinv2, leaf]
 
 OBSTACLES = UNDERGROUND_OBSTACLES + OVERGROUND_OBSTACLES
