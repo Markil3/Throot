@@ -21,9 +21,13 @@ class Player:
         self.x = int(self.xsub)
         self.y = int(self.ysub)
         
-        self.yspeed = 32 / CONST_FPS
         self.movespeed = 32 / CONST_FPS
-        self.isRoot = 1
+        self.isdecend = 1
+        
+        self.xspeed = 32 / CONST_FPS
+        self.yspeed = 32 / CONST_FPS
+        self.accx = 1 / (CONST_FPS * 4)
+        self.accaccx = self.accx
         
         self.anim = PlayerAnimation(self.x, self.y)
         self.debugvisible = True
@@ -34,15 +38,28 @@ class Player:
             inp -= 1
         if CONST_INP_MOVE_RIGHT.pressed():
             inp += 1
-            
+        
         # debug visible
         if thumby.buttonU.pressed():
             self.debugvisible = not self.debugvisible
         
+        ### x movement
+        self.xspeed += self.accx
+        self.accx += self.accaccx
+        
+        if (inp == 0) and (self.xspeed > self.movespeed):
+            self.xspeed = self.movespeed
+            self.accx = self.accaccx
+        
+        xx = self.xsub + inp * self.xspeed
+        
         # clamp to screen
-        self.xsub = max(min(self.xsub + inp * self.movespeed, thumby.display.width), 0)
+        self.xsub = max(min(xx, thumby.display.width - 1), 0)
+        
+        ### y movement
         self.ysub += self.yspeed
         
+        ### pixel positions
         self.x = int(self.xsub)
         self.y = int(self.ysub)
         
@@ -52,10 +69,10 @@ class Player:
     def update_draw(self, cam):
         # debug draw
         if self.debugvisible:
-            thumby.display.setPixel(self.x - cam.x, self.y - cam.y, self.isRoot)
+            thumby.display.setPixel(self.x - cam.x, self.y - cam.y, self.isdecend)
         
         # animation
-        self.anim.update_draw(cam, self.isRoot)
+        self.anim.update_draw(cam, self.isdecend)
         
 
 class Camera:
@@ -140,12 +157,12 @@ class PlayerAnimation:
             
         #print(len(self.poslist))
             
-    def update_draw(self, cam,  isRoot=1):
+    def update_draw(self, cam,  isdecend=1):
         ### draw line from first position to next
         
         for i in range(len(self.poslist) - 1):
             thumby.display.drawLine(self.poslist[i][self.POS_X] - cam.x,  self.poslist[i][self.POS_Y] - cam.y, 
-            self.poslist[i + 1][self.POS_X] - cam.x,  self.poslist[i + 1][self.POS_Y] - cam.y, isRoot)
+            self.poslist[i + 1][self.POS_X] - cam.x,  self.poslist[i + 1][self.POS_Y] - cam.y, isdecend)
         
 
 ### start
