@@ -1,4 +1,4 @@
-from typing import List, Tuple
+import thumby
 
 class ObstacleSlice:
     """
@@ -7,11 +7,11 @@ class ObstacleSlice:
     """
 
     """
-    How many units an obstacle slice is
+    How many units an obstacle slice is high
     """
-    height=20
+    height=max(80, thumby.display.height * 2)
     
-    def __init__(self, obstacle_map: List[Tuple[int]], difficulty: int):
+    def __init__(self, obstacle_map, difficulty: int):
         """
         Creates an obstacle slice
 
@@ -24,3 +24,14 @@ class ObstacleSlice:
         """
         self.obstacle_map = obstacle_map
         self.difficulty = difficulty
+
+OBSTACLE_SLICES = [
+    ObstacleSlice(
+        [
+            (10, 0, 0, 0, 0),
+            (53, 30, 1, 0, 0),
+            (5, 45, 0, 0, 0)
+        ],
+        0
+    )
+]

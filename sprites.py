@@ -1,11 +1,9 @@
-from typing import List, Tuple
 from random import randint
 
 import thumby
 
-import images
-
-from map import ObstacleSlice
+from Games.Throot.map import ObstacleSlice
+from Games.Throot.artrepository import OBSTACLES
 
 class Entity:
     """
@@ -53,8 +51,8 @@ class Entity:
         if self.x < -self.width or self.x >= thumby.display.width:
             return False
         max = current_depth
-        min = current_depth - thumby.display.height
-        if self.y < (min - self.height) or self.y >= max:
+        min = max - thumby.display.height
+        if self.y < (min - self.height) or self.y > max:
             return False
         return True
 
@@ -91,8 +89,8 @@ class Entity:
             should be hidden.
         """
         if self.sprite:
-            self.sprite.y = self.y - self.current_depth
-            self.sprite.x = self.x
+            self.sprite.y = int(self.y - current_depth + thumby.display.height)
+            self.sprite.x = int(self.x)
             if self.can_render(current_depth):
                 thumby.display.drawSprite(self.sprite)
                 return True
@@ -103,7 +101,7 @@ class Obstacle(Entity):
         return self.can_render(current_depth)
 
 
-def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth: int) -> List[Entity]:
+def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth: int):
     """
     Checks the current game state and generates new sprites based on said state.
 
@@ -122,12 +120,18 @@ def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth
     """
     if current_depth == prev_depth:
         # If we haven't moved, we don't need to spawn anything
-        return []
-    min_height = min(current_depth, prev_depth)
-    max_height = max(current_depth, prev_depth)
-    spawned = []
+        return set()
+    # Local y relative to the top of the slice
+    slice_y = (current_depth) % ObstacleSlice.height
+    slice_prev_y = (prev_depth) % ObstacleSlice.height
+    if slice_prev_y > slice_y:
+        slice_prev_y -= ObstacleSlice.height
+    spawned = set()
     for entity in current_slice.obstacle_map:
-        if y >= min_height and y < max_height:
+        # The position the entity should spawn at, relative to the slice top
+        entity_y = entity[1]
+        if entity_y >= slice_prev_y and entity_y < slice_y:
             sprite_image = OBSTACLES[entity[2]]
-            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.sprite, entity[0], entity[1], -1, entity[3] - current_depth, entity[4])
-            spawned = Obstacle(entity[0], entity[1], sprite_image.width, sprite_image.height, sprite_image.collision, sprite)
+            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, entity[3], entity[4])
+            spawned.add(Obstacle(entity[0], entity_y + current_depth // ObstacleSlice.height * ObstacleSlice.height, sprite_image.width, sprite_image.height, sprite_image.collision, sprite))
+    return spawned
