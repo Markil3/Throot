@@ -142,6 +142,5 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
                 break
         if not error:
             sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
-            print("Adding obstacle of to (%d, %d) of size (%d, %d)" % (x, y, sprite_image.width, sprite_image.height))
             spawned.add(Obstacle(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned

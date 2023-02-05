@@ -7,11 +7,13 @@ import Games.Throot.map
 import Games.Throot.sprites
 
 from random import randrange
-from Games.Throot.artrepository import OBSTACLES
+
+from Games.Throot.artrepository import *
 from Games.Throot.player import Player, Camera
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
 from Games.Throot.sprites import Obstacle, update_entities
 from Games.Throot.constants import *
+
 
 class GameManager:
     def __init__(self, *rooms):
@@ -76,7 +78,6 @@ class RoomTitle(Room):
         
 class GameLoop(Room):
     def __init__(self):
-        self.current_depth = 0
         self.diving_velocity = 10
         self.diving_accel = 0
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
@@ -86,18 +87,67 @@ class GameLoop(Room):
         self.camera = None
         
         self.score = 0
+        self.level = 0
+        self.finish_depth = 0
+        
+        self.waterx = float(0)
     
     def start(self, event):
-        self.current_depth = 0
         self.entities.clear()
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.player = Player()
         self.player.yspeed = 10
         self.score = 0
+        
+        self.finish_depth = 100 + 5 * self.level ** 2
         self.camera = Camera(self.player)
 
     def get_obstacle_slice(self):
         return OBSTACLE_SLICES[randrange(0, len(OBSTACLE_SLICES))]
+        
+    def draw_water(self):
+        # bookwater
+        
+        # exit if depth is less than 2 screens of the finish depth
+        if self.player.y + thumby.display.height < self.finish_depth:
+            return
+        
+        self.waterx += sprite_water.width / CONST_FPS
+        if self.waterx > sprite_water.width:
+            self.waterx = 0
+            
+        # water surface.
+        for i in range(math.ceil(thumby.display.width / sprite_water.width) + 1):
+            
+            x, y = self.camera.relative_to_camera(
+                (int(self.waterx) - sprite_water.width) + i * sprite_water.width,
+                self.finish_depth
+            )
+        
+            thumby.display.blit(
+                sprite_water[0],
+                int(x), int(y), 
+                sprite_water.width, sprite_water.height,
+                0, 
+                0, 0
+            )
+            
+        # water below surface
+        x, y = self.camera.relative_to_camera(
+            0,
+            self.finish_depth
+        )
+        
+        thumby.display.drawFilledRectangle(
+                int(x), int(y) + sprite_water.height,
+                thumby.display.width, self.finish_depth + thumby.display.height * 3,
+                1,
+        )
+        
+        # win text
+        if self.player.y > self.finish_depth + (thumby.display.height // 2):
+            thumby.display.drawText('water reach!', 0, thumby.display.height // 4, 0)
+            thumby.display.drawText(f'   stage {self.level + 1}', 0, thumby.display.height // 4 + 9, 0)
 
     def update(self, tpf):
         """
@@ -110,7 +160,10 @@ class GameLoop(Room):
         self.camera.update_phys()
 
         # Generate new entities as needed
-        self.entities |= update_entities(self.entities, 5, self.player.ysub, self.player.prev_y)
+        if abs(self.player.y) < abs(self.finish_depth):
+            self.entities |= update_entities(self.entities, 5, self.player.ysub, self.player.prev_y)
+        else:
+            self.entities.clear()
 
         # Updates the entities
         to_remove = set()
@@ -121,19 +174,29 @@ class GameLoop(Room):
                 if isinstance(entity, Obstacle):
                     return {
                         'room': ROOM_END,
-                        'score': self.score
+                        'score': self.score,
+                        'level': self.level + 1
                     }
         self.entities -= to_remove
         
-        self.score = self.player.x#int(abs(self.player.y) * 10)
+        self.score = int(abs(self.player.y) * 10)
+        
+        # finish level
+        if self.player.y > self.finish_depth + int(thumby.display.height * 1.5):
+            self.level += 1
+            self.start({})
 
         thumby.display.fill(0)
+        
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.camera)
         self.player.update_draw(self.camera)
 
+        self.draw_water()
+        
         thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
+        
         
 class EndRoom(Room):
     def __init__(self):

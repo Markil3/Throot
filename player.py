@@ -33,7 +33,7 @@ class Player:
         self.accaccx = self.accx
         
         self.anim = PlayerAnimation(self.x, self.y)
-        self.debugvisible = True
+        self.debugvisible = False
         
     def update_phys(self, tpf, camera: Camera):
         self.prev_x = self.xsub
