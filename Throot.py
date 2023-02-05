@@ -11,7 +11,7 @@ from random import randrange
 from Games.Throot.artrepository import *
 from Games.Throot.player import Player, Camera
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
-from Games.Throot.sprites import Obstacle, update_entities
+from Games.Throot.sprites import Obstacle, Collectible, update_entities
 from Games.Throot.constants import *
 
 
@@ -97,7 +97,8 @@ class GameLoop(Room):
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.player = Player()
         self.player.yspeed = 10
-        self.score = 0
+        self.score = 'score' in event and event['score'] or 0
+        self.level = 'level' in event and event['level'] or 0
         
         self.finish_depth = 100 + 5 * self.level ** 2
         self.camera = Camera(self.player)
@@ -177,14 +178,21 @@ class GameLoop(Room):
                         'score': self.score,
                         'level': self.level + 1
                     }
+                elif isinstance(entity, Collectible):
+                    self.score += entity.score
+                    to_remove.add(entity)
         self.entities -= to_remove
         
-        self.score = int(abs(self.player.y) * 10)
+        self.score += int(abs(self.player.ysub - self.player.prev_y) * 10)
         
         # finish level
         if self.player.y > self.finish_depth + int(thumby.display.height * 1.5):
+            self.score += 20
             self.level += 1
-            self.start({})
+            self.start({
+                'score': self.score,
+                'level': self.level
+            })
 
         thumby.display.fill(0)
         
