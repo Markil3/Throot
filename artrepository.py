@@ -175,4 +175,11 @@ Doritoobstaclelvl5 = SpriteImage(
     30
 )
 
+sprite_water =  SpriteImage(
+    bytearray([224,240,240,248,252,248,240,240]),
+    None,
+    8,
+    8
+)
+
 OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, leaf, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritoobstacle, spaceinv,annoydead,lvl4wall,ballobstaclelvl3,Doritoobstaclelvl5]
