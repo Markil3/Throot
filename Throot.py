@@ -111,6 +111,22 @@ class GameLoop(Room):
 
     def get_obstacle_slice(self):
         return OBSTACLE_SLICES[randrange(0, len(OBSTACLE_SLICES))]
+    
+    def draw_sky(self):
+        sky_x = 0
+        sky_y = -thumby.display.height
+        sky_width = thumby.display.width
+        sky_height = thumby.display.height
+        if self.camera.entity_in_camera(sky_x, sky_y, sky_width, sky_height):
+            sky_x, sky_y = self.camera.relative_to_camera(sky_x, sky_y)
+            thumby.display.drawFilledRectangle(int(sky_x), int(sky_y), int(sky_width), int(sky_height), 1)
+        sky_x = 0
+        sky_y = 0
+        sky_width = thumby.display.width
+        sky_height = thumby.display.height
+        if self.camera.entity_in_camera(sky_x, sky_y, sky_width, sky_height):
+            sky_x, sky_y = self.camera.relative_to_camera(sky_x, sky_y)
+            thumby.display.drawFilledRectangle(int(sky_x), int(sky_y), int(sky_width), int(sky_height), 0)
         
     def draw_water(self):
         # bookwater
@@ -201,7 +217,7 @@ class GameLoop(Room):
             })
 
         thumby.display.fill(0)
-        
+        self.draw_sky()
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.camera)
