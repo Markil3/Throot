@@ -127,7 +127,7 @@ class GameLoop(Room):
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.current_depth, prev_depth)
-        self.player.update_draw(self.current_depth, prev_depth)
+        self.player.update_draw(self.player.y)
 
         thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
         thumby.display.update()
