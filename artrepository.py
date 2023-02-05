@@ -189,8 +189,15 @@ sprite_title = SpriteImage(
     40
 )
 
-sprite_water =  SpriteImage(
-    bytearray([60,98,221,203,203,221,98,60]) + bytearray([56,68,186,150,150,186,68,56]),
+sprite_buttona1 =  SpriteImage(
+    bytearray([60,98,221,203,203,221,98,60]),
+    None,
+    8,
+    8
+)
+
+sprite_buttona2 =  SpriteImage(
+    bytearray([56,68,186,150,150,186,68,56]),
     None,
     8,
     8

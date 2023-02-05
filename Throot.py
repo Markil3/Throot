@@ -46,6 +46,9 @@ class GameManager:
         
 
 class Room:
+    def __init__(self):
+        self.ind_button = 0
+    
     def start(self, event):
         t0 = time.ticks_ms()   # Get time (ms)
         thumby.display.fill(0) # Fill canvas to black
@@ -83,8 +86,18 @@ class RoomTitle(Room):
         #thumby.display.drawText('press a', x, y, 0)
         thumby.display.drawText('start', x, y, 1)
         
-        thumby.display.blit(sprite_buttona.image, 2, 40 - 8, sprite_buttona.width, sprite_buttona.height, 
+        spr_b = thumby.Sprite(sprite_buttona1.width, sprite_buttona1.height, sprite_buttona1.image + sprite_buttona2.image, 2, 40 - 8, 
         -1, 0, 0)
+        
+        # thumby.display.blit(sprite_buttona.image, 2, 40 - 8, sprite_buttona.width, sprite_buttona.height, 
+        # -1, 0, 0)
+        
+        self.ind_button = (self.ind_button + 1) % (2 * CONST_FPS)
+        spr_b.setFrame(self.ind_button // (2 * CONST_FPS))
+        
+        #print(self.ind_button // CONST_FPS)
+        
+        thumby.display.drawSprite(spr_b)
         
 class GameLoop(Room):
     def __init__(self):
