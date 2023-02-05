@@ -23,6 +23,8 @@ class GameLoop:
         self.entities = set()
 
         self.player = Player()
+        
+        self.score = 0
 
     def get_obstacle_slice(self):
         return OBSTACLE_SLICES[randrange(0, len(OBSTACLE_SLICES))]
@@ -49,12 +51,15 @@ class GameLoop:
             if not entity.update(tpf, self.current_depth, prev_depth):
                 to_remove.add(entity)
         self.entities -= to_remove
+        
+        self.score = int(self.current_depth * 10)
 
         thumby.display.fill(0)
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.current_depth, prev_depth)
         self.player.update_draw(self.current_depth, prev_depth)
+        thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
         thumby.display.update()
 
 def main():
