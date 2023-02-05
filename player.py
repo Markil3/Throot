@@ -167,7 +167,7 @@ class PlayerAnimation:
     def update_draw(self, topleft, prev_depth, isdecend=1):
         ### draw line from first position to next
         
-        print(topleft)
+        #print(topleft)
         
         for i in range(len(self.poslist) - 1):
             thumby.display.drawLine(
