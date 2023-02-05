@@ -5,7 +5,7 @@ import thumby
 
 from Games.Throot.map import ObstacleSlice
 from Games.Throot.player import Player, Camera
-from Games.Throot.artrepository import OBSTACLES
+from Games.Throot.artrepository import *
 
 class Entity:
     """
@@ -67,7 +67,7 @@ class Entity:
             True if the game should keep this entity, false if the game should drop
             this entity from memory.
         """
-        return False
+        return True
 
     def render(self, tpf: float, camera: Camera) -> bool:
         """
@@ -94,6 +94,14 @@ class Entity:
         return False
 
 class Obstacle(Entity):    
+    def update(self, tpf: float, player: Player, camera: Camera) -> bool:
+        return True
+
+class Collectible(Entity):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.score = 'score' in kwargs and kwargs['score'] or 10
+        
     def update(self, tpf: float, player: Player, camera: Camera) -> bool:
         return True
 
@@ -125,7 +133,15 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
     spawned = set()
     max_spawned = randrange(0, difficulty + 1)
     while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
-        sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
+        if random() < 0.2:
+            Clazz = Collectible
+            if current_depth >= 0:
+                sprite_image = collectibleunder
+            else:
+                sprite_image = collectibleover
+        else:
+            Clazz = Obstacle
+            sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
         if sprite_image.width >= thumby.display.width:
             x = 0
         else:
@@ -142,5 +158,5 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
                 break
         if not error:
             sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
-            spawned.add(Obstacle(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
+            spawned.add(Clazz(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned
