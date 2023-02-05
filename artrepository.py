@@ -2,6 +2,27 @@ from collections import namedtuple
 
 SpriteImage = namedtuple("SpriteImage", ["image", "collision", "width", "height"])
 
+seed = SpriteImage(
+    bytearray([8,20,46,46,62,62,46,62,46,12,0]),
+    None,
+    11,
+    7
+)
+
+collectibleover = SpriteImage(
+    bytearray([9,4,6,9]),
+    None,
+    4,
+    4
+)
+
+collectibleunder = SpriteImage(
+    bytearray([6,11,9,6]),
+    None,
+    4,
+    4
+)
+
 # BITMAP: width: 8, height: 8
 skull = SpriteImage(
     bytearray([0,28,102,126,38,30,28,0]),
@@ -202,6 +223,5 @@ sprite_buttona2 =  SpriteImage(
     8,
     8
 )
-
 
 OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, leaf, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritoobstacle, spaceinv,annoydead,lvl4wall,ballobstaclelvl3,Doritoobstaclelvl5]
