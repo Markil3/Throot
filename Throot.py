@@ -11,7 +11,7 @@ from random import randrange
 from Games.Throot.artrepository import *
 from Games.Throot.player import Player, Camera
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
-from Games.Throot.sprites import Obstacle, Collectible, update_entities
+from Games.Throot.sprites import Entity, Obstacle, Collectible, update_entities
 from Games.Throot.constants import *
 
 
@@ -91,9 +91,15 @@ class GameLoop(Room):
         self.finish_depth = 0
         
         self.waterx = float(0)
+        
+        seed_sprite = thumby.Sprite(seed.width, seed.height, seed.image, 0, 0, 0, False, False)
+        self.seed = Entity((thumby.display.width - seed.width) // 2, 0, seed.width, seed.height, None, seed_sprite)
     
     def start(self, event):
         self.entities.clear()
+        self.entities.add(
+            self.seed
+        )
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.player = Player()
         self.player.yspeed = 10

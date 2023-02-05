@@ -67,7 +67,7 @@ class Entity:
             True if the game should keep this entity, false if the game should drop
             this entity from memory.
         """
-        return False
+        return True
 
     def render(self, tpf: float, camera: Camera) -> bool:
         """
