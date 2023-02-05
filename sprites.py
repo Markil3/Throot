@@ -127,9 +127,9 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
         return set()
         
     spawned = set()
-    max_spawned = randrange(0, difficulty + 1)
-    while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty, 2)) / (3 * math.pow(difficulty, 2) + 20 * difficulty):
-        sprite_image = OBSTACLES[randrange(0, len(OBSTACLES))]
+    max_spawned = 1#randrange(0, difficulty + 1)
+    while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
+        sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
         if sprite_image.width >= thumby.display.width:
             x = 0
         else:
