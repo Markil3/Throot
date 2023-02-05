@@ -3,11 +3,12 @@ import thumby
 import math
 import random
 
+from Games.Throot.constants import CONST_FPS
+
 # didplay width 72
 # display height 40
 
 # constants
-CONST_FPS = 60
 CONST_PL_SCREEN_Y =  int((0.5) * thumby.display.height)
 
 CONST_INP_MOVE_LEFT = thumby.buttonL
