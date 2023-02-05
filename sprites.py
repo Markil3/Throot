@@ -33,8 +33,8 @@ class Entity:
             return False
         if loc_x < self.x or loc_x >= self.x + self.width or loc_y < self.y or loc_y >= self.y + self.height:
             return False
-        rel_x = loc_x - self.x
-        rel_y = loc_y - self.y
+        rel_x = int(loc_x - self.x)
+        rel_y = int(loc_y - self.y)
         return bool((self.collision[rel_x] >> (self.height - rel_y)) & 1)
 
     def can_render(self, current_depth: int) -> bool:
@@ -124,14 +124,18 @@ def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth
     # Local y relative to the top of the slice
     slice_y = (current_depth) % ObstacleSlice.height
     slice_prev_y = (prev_depth) % ObstacleSlice.height
-    if slice_prev_y > slice_y:
+    if prev_depth < current_depth and slice_prev_y > slice_y:
         slice_prev_y -= ObstacleSlice.height
+    elif current_depth < prev_depth and slice_y > slice_prev_y:
+        slice_prev_y += ObstacleSlice.height
+    min_y = min(slice_prev_y, slice_y)
+    max_y = max(slice_prev_y, slice_y)
     spawned = set()
     for entity in current_slice.obstacle_map:
         # The position the entity should spawn at, relative to the slice top
         entity_y = entity[1]
-        if entity_y >= slice_prev_y and entity_y < slice_y:
+        if entity_y >= min_y and entity_y < max_y:
             sprite_image = OBSTACLES[entity[2]]
             sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, entity[3], entity[4])
-            spawned.add(Obstacle(entity[0], entity_y + current_depth // ObstacleSlice.height * ObstacleSlice.height, sprite_image.width, sprite_image.height, sprite_image.collision, sprite))
+            spawned.add(Obstacle(entity[0], entity_y + current_depth // ObstacleSlice.height * ObstacleSlice.height, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned
