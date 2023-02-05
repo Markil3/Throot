@@ -46,6 +46,9 @@ class GameManager:
         
 
 class Room:
+    def __init__(self):
+        self.ind_button = 0
+    
     def start(self, event):
         t0 = time.ticks_ms()   # Get time (ms)
         thumby.display.fill(0) # Fill canvas to black
@@ -64,17 +67,37 @@ class RoomTitle(Room):
             }
         
         # draw title sprite
-        title_text = 'press a to start'
+        #thumby.display.drawSprite(sprite_title.width, sprite_title.height, sprite_title.image)
         
-        chr_len = 5
-        x = int(round(thumby.display.width / 2 - (chr_len * len(title_text)) / 2))
-        y = int(round(thumby.display.height / 2 - chr_len / 2))
+        thumby.display.blit(sprite_title.image, 0, 0, sprite_title.width, sprite_title.height, 
+        -1, 0, 0)
         
+        # title text
+        chrx = 5
+        chry = 7
         buff = 2
-        w = chr_len * len(title_text) + buff
-        h = chr_len + buff
-        thumby.display.drawFilledRectangle(x - buff, y - buff, w, h, 1)
-        thumby.display.drawText(title_text, x, y, 0)
+        
+        x = 14#int(round(thumby.display.width / 2 - (chr_len * len(title_text)) / 2))
+        y = 40 - chry - buff#int(round(thumby.display.height / 2 - chr_len / 2))
+        
+        w = chrx * 6 + buff
+        h = chry + buff
+        thumby.display.drawFilledRectangle(x - buff, y - buff, w, h * 2 + buff, 0)
+        #thumby.display.drawText('press a', x, y, 0)
+        thumby.display.drawText('start', x, y, 1)
+        
+        spr_b = thumby.Sprite(sprite_buttona1.width, sprite_buttona1.height, sprite_buttona1.image + sprite_buttona2.image, 2, 40 - 8, 
+        -1, 0, 0)
+        
+        # thumby.display.blit(sprite_buttona.image, 2, 40 - 8, sprite_buttona.width, sprite_buttona.height, 
+        # -1, 0, 0)
+        
+        self.ind_button = (self.ind_button + 1) % (2 * CONST_FPS)
+        spr_b.setFrame(self.ind_button // (2 * CONST_FPS))
+        
+        #print(self.ind_button // CONST_FPS)
+        
+        thumby.display.drawSprite(spr_b)
         
 class GameLoop(Room):
     def __init__(self):
