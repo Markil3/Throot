@@ -4,6 +4,7 @@ from random import randrange, random
 import thumby
 
 from Games.Throot.map import ObstacleSlice
+from Games.Throot.player import Player, Camera
 from Games.Throot.artrepository import OBSTACLES
 
 class Entity:
@@ -36,9 +37,9 @@ class Entity:
             return False
         rel_x = int(loc_x - self.x)
         rel_y = int(loc_y - self.y)
-        return bool((self.collision[rel_x] >> (self.height - rel_y)) & 1)
+        return bool((self.collision[rel_x] >> (rel_y)) & 1)
 
-    def can_render(self, current_depth: int) -> bool:
+    def can_render(self, camera: Camera) -> bool:
         """
         Checks to see if this sprite is within the game screen.
 
@@ -49,15 +50,9 @@ class Entity:
         :return:
             True if the sprite shows up on screen in any capacity, false otherwise.
         """
-        if self.x < -self.width or self.x >= thumby.display.width:
-            return False
-        max = current_depth
-        min = max - thumby.display.height
-        if self.y < (min - self.height) or self.y > max:
-            return False
-        return True
+        return camera.entity_in_camera(self.x, self.y, self.width, self.height)
 
-    def update(self, tpf: float, current_depth: int, prev_depth: int) -> bool:
+    def update(self, tpf: float, player: Player, camera: Camera) -> bool:
         """
         Updates the state of the entity based on the game state.
 
@@ -74,7 +69,7 @@ class Entity:
         """
         return False
 
-    def render(self, tpf: float, current_depth: int, prev_depth: int) -> bool:
+    def render(self, tpf: float, camera: Camera) -> bool:
         """
         Sets the position of the sprite and draws it.
         
@@ -90,16 +85,17 @@ class Entity:
             should be hidden.
         """
         if self.sprite:
-            self.sprite.y = int(self.y - current_depth + thumby.display.height)
-            self.sprite.x = int(self.x)
-            if self.can_render(current_depth):
+            coordinates = camera.relative_to_camera(self.x, self.y)
+            self.sprite.x = coordinates[0]
+            self.sprite.y = coordinates[1]
+            if self.can_render(camera):
                 thumby.display.drawSprite(self.sprite)
                 return True
         return False
 
 class Obstacle(Entity):    
-    def update(self, tpf: float, current_depth: int, prev_depth: int) -> bool:
-        return self.can_render(current_depth)
+    def update(self, tpf: float, player: Player, camera: Camera) -> bool:
+        return True
 
 
 def update_entities(entities, difficulty: int, current_depth: int, prev_depth: int):
@@ -127,7 +123,7 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
         return set()
         
     spawned = set()
-    max_spawned = 1#randrange(0, difficulty + 1)
+    max_spawned = randrange(0, difficulty + 1)
     while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
         sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
         if sprite_image.width >= thumby.display.width:
@@ -135,6 +131,10 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
         else:
             x = randrange(0, thumby.display.width - sprite_image.width)
         y = current_depth
+        if current_depth > prev_depth:
+            y += thumby.display.height // 2
+        elif current_depth < prev_depth:
+            y -= thumby.display.height // 2 + sprite_image.height
         error = False
         for entity in entities | spawned:
             if x > (entity.x - OBSTACLE_BUFFER) and x <= (entity.x + entity.width + OBSTACLE_BUFFER) and y > (entity.y - OBSTACLE_BUFFER) and y <= (entity.y + entity.height + OBSTACLE_BUFFER):
@@ -142,5 +142,6 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
                 break
         if not error:
             sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
+            print("Adding obstacle of to (%d, %d) of size (%d, %d)" % (x, y, sprite_image.width, sprite_image.height))
             spawned.add(Obstacle(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned
