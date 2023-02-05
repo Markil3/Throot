@@ -32,7 +32,7 @@ class Player:
         self.anim = PlayerAnimation(self.x, self.y)
         self.debugvisible = True
         
-    def update_phys(self):
+    def update_phys(self, current_depth, prev_depth):
         inp = int(0)
         if CONST_INP_MOVE_LEFT.pressed():
             inp -= 1
@@ -57,7 +57,7 @@ class Player:
         self.xsub = max(min(xx, thumby.display.width - 1), 0)
         
         ### y movement
-        self.ysub += self.yspeed
+        self.ysub = current_depth - (thumby.display.height / 2)
         
         ### pixel positions
         self.x = int(self.xsub)
@@ -66,13 +66,15 @@ class Player:
         # animation
         self.anim.update_phys(self.x, self.y, CONST_PL_SCREEN_Y)
         
-    def update_draw(self, cam):
+    def update_draw(self, current_depth, prev_depth):
         # debug draw
         if self.debugvisible:
-            thumby.display.setPixel(self.x - cam.x, self.y - cam.y, self.isdecend)
+            pix_x = self.x
+            pix_y = int(current_depth - self.y)
+            thumby.display.setPixel(pix_x, pix_y, self.isdecend)
         
         # animation
-        self.anim.update_draw(cam, self.isdecend)
+        self.anim.update_draw(current_depth, prev_depth, self.isdecend)
         
 
 class Camera:
@@ -142,8 +144,10 @@ class PlayerAnimation:
         # plworldy + random.randrange(-rad, rad)))
         
         # move last pos
-        self.poslist[-1] = (plworldx + random.randrange(-rad, rad), 
-        plworldy + random.randrange(-rad, rad))
+        self.poslist[-1] = (
+            plworldx + random.randrange(-rad, rad), 
+            plworldy + random.randrange(-rad, rad)
+        )
         
         # new pos is perfectly on player
         self.poslist.append((plworldx, plworldy))
@@ -152,39 +156,19 @@ class PlayerAnimation:
         # self.poslist.append((plworldx, plworldy))
         
         ### remove the fist item in the list if its full line is off screen
-        if self.poslist[1][self.POS_Y] < plworldy - plscreeny:
-            self.poslist.pop(0)
+        #if self.poslist[1][self.POS_Y] < plworldy - plscreeny:
+        #    self.poslist.pop(0)
             
         #print(len(self.poslist))
             
-    def update_draw(self, cam,  isdecend=1):
+    def update_draw(self, current_depth, prev_depth, isdecend=1):
         ### draw line from first position to next
         
         for i in range(len(self.poslist) - 1):
-            thumby.display.drawLine(self.poslist[i][self.POS_X] - cam.x,  self.poslist[i][self.POS_Y] - cam.y, 
-            self.poslist[i + 1][self.POS_X] - cam.x,  self.poslist[i + 1][self.POS_Y] - cam.y, isdecend)
-        
-
-### start
-# Set the FPS (without this call, the default fps is 30)
-thumby.display.setFPS(CONST_FPS)
-
-pl = Player()
-cam = Camera(pl)
-
-print("game ready")
-
-
-### game loop
-while(True):
-    t0 = time.ticks_ms()   # Get time (ms)
-    thumby.display.fill(0) # Fill canvas to black
-    
-    # update physics
-    pl.update_phys()
-    cam.update_phys(CONST_PL_SCREEN_Y)
-    
-    # update drawing
-    pl.update_draw(cam)
-    
-    thumby.display.update()
+            thumby.display.drawLine(
+                int(self.poslist[i][self.POS_X]),
+                int(current_depth - self.poslist[i][self.POS_Y]), 
+                int(self.poslist[i + 1][self.POS_X]),
+                int(current_depth - self.poslist[i + 1][self.POS_Y]),
+                isdecend
+            )

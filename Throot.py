@@ -5,6 +5,7 @@ import math
 import Games.Throot.map
 import Games.Throot.sprites
 from Games.Throot.artrepository import OBSTACLES
+from Games.Throot.player import Player
 
 from random import randrange
 
@@ -21,6 +22,8 @@ class GameLoop:
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.entities = set()
 
+        self.player = Player()
+
     def get_obstacle_slice(self):
         return OBSTACLE_SLICES[randrange(0, len(OBSTACLE_SLICES))]
 
@@ -34,6 +37,8 @@ class GameLoop:
 
         if self.current_depth % ObstacleSlice.height < prev_depth % ObstacleSlice.height:
             self.current_obstacle_slice = self.get_obstacle_slice()
+
+        self.player.update_phys(self.current_depth, prev_depth)
 
         # Generate new entities as needed
         self.entities |= update_entities(self.current_obstacle_slice, self.current_depth, prev_depth)
@@ -49,6 +54,7 @@ class GameLoop:
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.current_depth, prev_depth)
+        self.player.update_draw(self.current_depth, prev_depth)
         thumby.display.update()
 
 def main():
