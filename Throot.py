@@ -10,7 +10,7 @@ from random import randrange
 from Games.Throot.artrepository import OBSTACLES
 from Games.Throot.player import Player
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
-from Games.Throot.sprites import update_entities
+from Games.Throot.sprites import Obstacle, update_entities
 from Games.Throot.constants import CONST_FPS
 
 class GameManager:
@@ -96,8 +96,14 @@ class GameLoop(Room):
         prev_depth = self.current_depth
         self.diving_velocity += self.diving_accel * tpf
         self.current_depth += self.diving_velocity * tpf
+        
+        #print("%f (%f)" % (self.current_depth, self.current_depth % ObstacleSlice.height))
 
-        if self.current_depth % ObstacleSlice.height < prev_depth % ObstacleSlice.height:
+        #print("%f -> %f: %f -> %f" % (prev_depth, self.current_depth, prev_depth % ObstacleSlice.height, self.current_depth % ObstacleSlice.height))
+        if (
+            self.current_depth > prev_depth and self.current_depth % ObstacleSlice.height < prev_depth % ObstacleSlice.height
+            or self.current_depth < prev_depth and self.current_depth % ObstacleSlice.height > prev_depth % ObstacleSlice.height
+            ):
             self.current_obstacle_slice = self.get_obstacle_slice()
 
         self.player.update_phys(self.current_depth, prev_depth)
@@ -110,6 +116,9 @@ class GameLoop(Room):
         for entity in self.entities:
             if not entity.update(tpf, self.current_depth, prev_depth):
                 to_remove.add(entity)
+            elif entity.intersects_pixel(self.player.xsub, self.player.ysub):
+                if isinstance(entity, Obstacle):
+                    print("Hit!")
         self.entities -= to_remove
         
         self.score = int(self.current_depth * 10)
@@ -118,7 +127,7 @@ class GameLoop(Room):
         # Draw the entities
         for entity in self.entities:
             entity.render(tpf, self.current_depth, prev_depth)
-        self.player.update_draw(self.current_depth, prev_depth)
+        self.player.update_draw(self.player.y)
 
         thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
         thumby.display.update()

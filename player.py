@@ -65,17 +65,17 @@ class Player:
         self.y = int(self.ysub)
         
         # animation
-        self.anim.update_phys(self.x, self.y, CONST_PL_SCREEN_Y)
+        self.anim.update_phys(self.x, self.y, CONST_PL_SCREEN_Y, current_depth)
         
-    def update_draw(self, current_depth, prev_depth):
+    def update_draw(self, plworldy):
         # debug draw
         if self.debugvisible:
             pix_x = self.x
-            pix_y = int(current_depth - self.y)
+            pix_y = int(self.y - plworldy + 20)
             thumby.display.setPixel(pix_x, pix_y, self.isdecend)
         
         # animation
-        self.anim.update_draw(current_depth, prev_depth, self.isdecend)
+        self.anim.update_draw(plworldy - 20, self.isdecend)
         
 
 class Camera:
@@ -101,7 +101,9 @@ class PlayerAnimation:
         self.debugrandomrange = self.RANDOM_RANGE
         self.debugposrange = self.POS_RANGE
     
-    def update_phys(self, plworldx, plworldy, plscreeny):
+    def update_phys(self, plworldx, plworldy, plscreeny, current_depth):
+        
+        #print(plworldx, plworldy, plscreeny, current_depth)
         
         ### exit if player y pos less than random range
         # # debug change random range
@@ -157,19 +159,21 @@ class PlayerAnimation:
         # self.poslist.append((plworldx, plworldy))
         
         ### remove the fist item in the list if its full line is off screen
-        #if self.poslist[1][self.POS_Y] < plworldy - plscreeny:
-        #    self.poslist.pop(0)
+        if self.poslist[1][self.POS_Y] < plworldy - plscreeny:
+            self.poslist.pop(0)
             
         #print(len(self.poslist))
             
-    def update_draw(self, current_depth, prev_depth, isdecend=1):
+    def update_draw(self, topleft, prev_depth, isdecend=1):
         ### draw line from first position to next
+        
+        #print(topleft)
         
         for i in range(len(self.poslist) - 1):
             thumby.display.drawLine(
                 int(self.poslist[i][self.POS_X]),
-                int(current_depth - self.poslist[i][self.POS_Y]), 
+                int(self.poslist[i][self.POS_Y] - topleft), 
                 int(self.poslist[i + 1][self.POS_X]),
-                int(current_depth - self.poslist[i + 1][self.POS_Y]),
+                int(self.poslist[i + 1][self.POS_Y] - topleft),
                 isdecend
             )
