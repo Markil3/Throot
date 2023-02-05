@@ -122,7 +122,8 @@ bigdoritoobstacle = SpriteImage(
 )
 # BITMAP: width: 16, height: 16
 leaf = SpriteImage(
-    bytearray([128,1,1,1,3,3,3,71,135,15,15,31,63,255,255,255,255,254,252,248,240,240,224,224,192,193,194,196,200,144,1,63]),
+    bytearray([127,254,254,254,252,252,252,184,120,240,240,224,192,0,0,0,
+            0,1,3,7,15,15,31,31,63,62,61,59,55,111,254,192]),
     None,
     16,
     16
@@ -174,4 +175,4 @@ Doritoobstaclelvl5 = SpriteImage(
     30
 )
 
-OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritoobstacle, spaceinv, leaf,annoydead,lvl4wall,ballobstaclelvl3,Doritoobstaclelvl5]
+OBSTACLES = [skull, pizza, boulder, ball, steve, mathroot, leaf, robot, dinoskull, dinojaw, dinospine, bone, bigdinohead, bigboneddiag, bigdoritoobstacle, spaceinv,annoydead,lvl4wall,ballobstaclelvl3,Doritoobstaclelvl5]
