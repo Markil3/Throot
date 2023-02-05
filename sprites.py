@@ -37,7 +37,7 @@ class Entity:
             return False
         rel_x = int(loc_x - self.x)
         rel_y = int(loc_y - self.y)
-        return bool((self.collision[rel_x] >> (self.height - rel_y)) & 1)
+        return bool((self.collision[rel_x] >> (rel_y)) & 1)
 
     def can_render(self, camera: Camera) -> bool:
         """
@@ -123,8 +123,8 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
         return set()
         
     spawned = set()
-    max_spawned = 1#randrange(0, difficulty + 1)
-    while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
+    max_spawned = randrange(0, difficulty + 1)
+    while len(entities) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
         sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
         if sprite_image.width >= thumby.display.width:
             x = 0
@@ -141,7 +141,7 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
                 error = True
                 break
         if not error:
-            print("Creating entity at %d, %d" % (x, y))
             sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
+            print("Adding obstacle of to (%d, %d) of size (%d, %d)" % (x, y, sprite_image.width, sprite_image.height))
             spawned.add(Obstacle(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned

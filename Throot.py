@@ -116,7 +116,6 @@ class GameLoop(Room):
         to_remove = set()
         for entity in self.entities:
             if not entity.update(tpf, self.player, self.camera) or abs(entity.y - self.player.y) > self.camera.height * 1.5:
-                print("Removing entity at (%d, %d) (or %d)" % (entity.x, entity.y, abs(entity.y - self.player.y)))
                 to_remove.add(entity)
             elif entity.intersects_pixel(self.player.xsub, self.player.ysub):
                 if isinstance(entity, Obstacle):
@@ -126,7 +125,7 @@ class GameLoop(Room):
                     }
         self.entities -= to_remove
         
-        self.score = self.player.y#int(abs(self.player.y) * 10)
+        self.score = self.player.x#int(abs(self.player.y) * 10)
 
         thumby.display.fill(0)
         # Draw the entities

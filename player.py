@@ -92,9 +92,7 @@ class Camera:
         self.target = target
     
     def entity_in_camera(self, ent_x, ent_y, ent_width = 0, ent_height = 0) -> bool:
-        if ent_x + ent_width >= self.x and ent_y + ent_height >= self.y and ent_x < self.x + self.width and ent_y < self.y + self.height:
-            return True
-        print("Dropping entity (%d, %d - %d, %d) from (%d, %d - %d, %d)" % (ent_x, ent_y, ent_x + ent_width, ent_y + ent_height, self.x, self.y, self.x + self.width, self.y + self.height))
+        return ent_x + ent_width >= self.x and ent_y + ent_height >= self.y and ent_x < self.x + self.width and ent_y < self.y + self.height
     
     def relative_to_camera(self, global_x, global_y):
         return (global_x - self.x, global_y - self.y)
