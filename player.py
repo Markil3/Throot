@@ -17,6 +17,8 @@ CONST_INP_MOVE_RIGHT = thumby.buttonA
 # classes
 class Player:
     def __init__(self):
+        self.prev_x = 0
+        self.prev_y = 0
         self.xsub = float(thumby.display.width / 2)
         self.ysub = float(0)
         self.x = int(self.xsub)
@@ -26,14 +28,16 @@ class Player:
         self.isdecend = 1
         
         self.xspeed = 32 / CONST_FPS
-        self.yspeed = 32 / CONST_FPS
+        self.yspeed = 32
         self.accx = 1 / (CONST_FPS * 4)
         self.accaccx = self.accx
         
         self.anim = PlayerAnimation(self.x, self.y)
         self.debugvisible = True
         
-    def update_phys(self, current_depth, prev_depth):
+    def update_phys(self, tpf, camera: Camera):
+        self.prev_x = self.xsub
+        self.prev_y = self.ysub
         inp = int(0)
         if CONST_INP_MOVE_LEFT.pressed():
             inp -= 1
@@ -58,35 +62,46 @@ class Player:
         self.xsub = max(min(xx, thumby.display.width - 1), 0)
         
         ### y movement
-        self.ysub = current_depth - (thumby.display.height / 2)
+        
+        self.ysub += self.yspeed * tpf
         
         ### pixel positions
         self.x = int(self.xsub)
         self.y = int(self.ysub)
         
         # animation
-        self.anim.update_phys(self.x, self.y, CONST_PL_SCREEN_Y, current_depth)
+        self.anim.update_phys(self.x, self.y, camera)
         
-    def update_draw(self, plworldy):
+    def update_draw(self, camera):
         # debug draw
         if self.debugvisible:
-            pix_x = self.x
-            pix_y = int(self.y - plworldy + 20)
-            thumby.display.setPixel(pix_x, pix_y, self.isdecend)
+            pix_x, pix_y = camera.relative_to_camera(self.x, self.y)
+            thumby.display.setPixel(int(pix_x), int(pix_y), self.isdecend)
         
         # animation
-        self.anim.update_draw(plworldy - 20, self.isdecend)
+        self.anim.update_draw(camera, self.isdecend)
         
 
 class Camera:
     def __init__(self, target):
         self.x = int(0)
         self.y = int(0)
+        self.width = thumby.display.width
+        self.height = thumby.display.height
+        self.offset = -self.height / 2
         self.target = target
     
-    def update_phys(self, plscreeny):
+    def entity_in_camera(self, ent_x, ent_y, ent_width = 0, ent_height = 0) -> bool:
+        if ent_x + ent_width >= self.x and ent_y + ent_height >= self.y and ent_x < self.x + self.width and ent_y < self.y + self.height:
+            return True
+        print("Dropping entity (%d, %d - %d, %d) from (%d, %d - %d, %d)" % (ent_x, ent_y, ent_x + ent_width, ent_y + ent_height, self.x, self.y, self.x + self.width, self.y + self.height))
+    
+    def relative_to_camera(self, global_x, global_y):
+        return (global_x - self.x, global_y - self.y)
+    
+    def update_phys(self):
         # position player
-        self.y = self.target.y - plscreeny
+        self.y = self.target.y + self.offset
 
 
 class PlayerAnimation:
@@ -101,7 +116,7 @@ class PlayerAnimation:
         self.debugrandomrange = self.RANDOM_RANGE
         self.debugposrange = self.POS_RANGE
     
-    def update_phys(self, plworldx, plworldy, plscreeny, current_depth):
+    def update_phys(self, plworldx, plworldy, camera):
         
         #print(plworldx, plworldy, plscreeny, current_depth)
         
@@ -159,21 +174,23 @@ class PlayerAnimation:
         # self.poslist.append((plworldx, plworldy))
         
         ### remove the fist item in the list if its full line is off screen
-        if self.poslist[1][self.POS_Y] < plworldy - plscreeny:
+        if not camera.entity_in_camera(self.poslist[1][self.POS_X], self.poslist[1][self.POS_Y]):
             self.poslist.pop(0)
             
         #print(len(self.poslist))
             
-    def update_draw(self, topleft, prev_depth, isdecend=1):
+    def update_draw(self, camera, isdecend=1):
         ### draw line from first position to next
         
         #print(topleft)
         
         for i in range(len(self.poslist) - 1):
+            x1, y1 = camera.relative_to_camera(self.poslist[i][self.POS_X], self.poslist[i][self.POS_Y])
+            x2, y2 = camera.relative_to_camera(self.poslist[i + 1][self.POS_X], self.poslist[i + 1][self.POS_Y])
             thumby.display.drawLine(
-                int(self.poslist[i][self.POS_X]),
-                int(self.poslist[i][self.POS_Y] - topleft), 
-                int(self.poslist[i + 1][self.POS_X]),
-                int(self.poslist[i + 1][self.POS_Y] - topleft),
+                int(x1),
+                int(y1), 
+                int(x2),
+                int(y2),
                 isdecend
             )

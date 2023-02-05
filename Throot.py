@@ -8,7 +8,7 @@ import Games.Throot.sprites
 
 from random import randrange
 from Games.Throot.artrepository import OBSTACLES
-from Games.Throot.player import Player
+from Games.Throot.player import Player, Camera
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
 from Games.Throot.sprites import Obstacle, update_entities
 from Games.Throot.constants import *
@@ -82,7 +82,8 @@ class GameLoop(Room):
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.entities = set()
 
-        self.player = Player()
+        self.player = None
+        self.camera = None
         
         self.score = 0
     
@@ -91,7 +92,9 @@ class GameLoop(Room):
         self.entities.clear()
         self.current_obstacle_slice = OBSTACLE_SLICES[0]
         self.player = Player()
+        self.player.yspeed = 10
         self.score = 0
+        self.camera = Camera(self.player)
 
     def get_obstacle_slice(self):
         return OBSTACLE_SLICES[randrange(0, len(OBSTACLE_SLICES))]
@@ -101,28 +104,19 @@ class GameLoop(Room):
         Executes one tick of the game
         """
         super().update(tpf)
-        prev_depth = self.current_depth
-        self.diving_velocity += self.diving_accel * tpf
-        self.current_depth += self.diving_velocity * tpf
+
+        self.player.update_phys(tpf, self.camera)
         
-        #print("%f (%f)" % (self.current_depth, self.current_depth % ObstacleSlice.height))
-
-        #print("%f -> %f: %f -> %f" % (prev_depth, self.current_depth, prev_depth % ObstacleSlice.height, self.current_depth % ObstacleSlice.height))
-        if (
-            self.current_depth > prev_depth and self.current_depth % ObstacleSlice.height < prev_depth % ObstacleSlice.height
-            or self.current_depth < prev_depth and self.current_depth % ObstacleSlice.height > prev_depth % ObstacleSlice.height
-            ):
-            self.current_obstacle_slice = self.get_obstacle_slice()
-
-        self.player.update_phys(self.current_depth, prev_depth)
+        self.camera.update_phys()
 
         # Generate new entities as needed
-        self.entities |= update_entities(self.entities, 5, self.current_depth, prev_depth)
+        self.entities |= update_entities(self.entities, 5, self.player.ysub, self.player.prev_y)
 
         # Updates the entities
         to_remove = set()
         for entity in self.entities:
-            if not entity.update(tpf, self.current_depth, prev_depth):
+            if not entity.update(tpf, self.player, self.camera) or abs(entity.y - self.player.y) > self.camera.height * 1.5:
+                print("Removing entity at (%d, %d) (or %d)" % (entity.x, entity.y, abs(entity.y - self.player.y)))
                 to_remove.add(entity)
             elif entity.intersects_pixel(self.player.xsub, self.player.ysub):
                 if isinstance(entity, Obstacle):
@@ -132,13 +126,13 @@ class GameLoop(Room):
                     }
         self.entities -= to_remove
         
-        self.score = int(self.current_depth * 10)
+        self.score = self.player.y#int(abs(self.player.y) * 10)
 
         thumby.display.fill(0)
         # Draw the entities
         for entity in self.entities:
-            entity.render(tpf, self.current_depth, prev_depth)
-        self.player.update_draw(self.player.y)
+            entity.render(tpf, self.camera)
+        self.player.update_draw(self.camera)
 
         thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
         
