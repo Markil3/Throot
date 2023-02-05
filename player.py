@@ -123,7 +123,7 @@ class PlayerAnimation:
         # if plworldy < self.poslist[-1][self.POS_Y] + self.debugposrange:
         #     return
             
-        if plworldy < self.poslist[-1][self.POS_Y] + self.POS_RANGE:
+        if plworldy < self.poslist[-1][self.POS_Y] + random.randint(1, self.POS_RANGE):
             return
         
         ### get new position
