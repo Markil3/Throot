@@ -1,20 +1,79 @@
 import time
-import thumby
 import math
+
+import thumby
 
 import Games.Throot.map
 import Games.Throot.sprites
-from Games.Throot.artrepository import OBSTACLES
-from Games.Throot.player import Player
 
 from random import randrange
-
-import thumby
-
+from Games.Throot.artrepository import OBSTACLES
+from Games.Throot.player import Player
 from Games.Throot.map import ObstacleSlice, OBSTACLE_SLICES
 from Games.Throot.sprites import update_entities
+from Games.Throot.constants import CONST_FPS
 
-class GameLoop:
+class GameManager:
+    EVENT_ROOM_CHANGE = {'start': 0, 'main': 1, 'end': 2, 'next': -1}
+    
+    def __init__(self, *rooms):
+         self.rooms = rooms
+         self.room_index = 0
+
+    def start(self):
+        # Set the FPS (without this call, the default fps is 30)
+        thumby.display.setFPS(CONST_FPS)
+
+    def room_goto(self, index):
+        if index < 0:
+            self.room_index = min(self.room_index + 1, len(self.rooms))
+        else:
+            self.room_index = index
+            
+        self.rooms[self.room_index].start()
+
+    def restart(self):
+        self.room_index = 0
+        
+    def update(self, tpf):
+        event = self.rooms[self.room_index].update(tpf)
+        
+        thumby.display.update()
+        
+        if event:
+            self.room_goto(self.EVENT_ROOM_CHANGE[event])
+        
+
+class Room:
+    def start(self):
+        t0 = time.ticks_ms()   # Get time (ms)
+        thumby.display.fill(0) # Fill canvas to black
+    
+    def update(self, tpf):
+        pass
+
+
+class RoomTitle(Room):
+    def update(self, tpf):
+        super().update(tpf)
+        
+        if thumby.inputPressed():
+            return 'main'
+        
+        # draw title sprite
+        title_text = 'press a to start'
+        
+        chr_len = 5
+        x = int(round(thumby.display.width / 2 - (chr_len * len(title_text)) / 2))
+        y = int(round(thumby.display.height / 2 - chr_len / 2))
+        
+        buff = 2
+        w = chr_len * len(title_text) + buff
+        h = chr_len + buff
+        thumby.display.drawFilledRectangle(x - buff, y - buff, w, h, 1)
+        thumby.display.drawText(title_text, x, y, 0)
+        
+class GameLoop(Room):
     def __init__(self):
         self.current_depth = 0
         self.diving_velocity = 10
@@ -33,6 +92,7 @@ class GameLoop:
         """
         Executes one tick of the game
         """
+        super().update(tpf)
         prev_depth = self.current_depth
         self.diving_velocity += self.diving_accel * tpf
         self.current_depth += self.diving_velocity * tpf
@@ -59,21 +119,20 @@ class GameLoop:
         for entity in self.entities:
             entity.render(tpf, self.current_depth, prev_depth)
         self.player.update_draw(self.current_depth, prev_depth)
+
         thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
         thumby.display.update()
 
-def main():
-    # Set the FPS (without this call, the default fps is 30)
-    thumby.display.setFPS(60)
-
-    print("Starting game loop")
-    loop = GameLoop()
+def main():    
+    game = GameManager(RoomTitle(), GameLoop())
+    game.start()
 
     prev_time = 0
     while True:
         t0 = time.ticks_ms()
         tps = (t0 - prev_time) / 1000
-        loop.update(tps)
+        #loop.update(tps)
+        game.update(tps)
         prev_time = t0
 
 main()

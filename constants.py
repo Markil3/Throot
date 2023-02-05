@@ -1,0 +1,1 @@
+CONST_FPS = 60
