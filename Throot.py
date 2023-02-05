@@ -161,7 +161,7 @@ class GameLoop(Room):
 
         # Generate new entities as needed
         if abs(self.player.y) < abs(self.finish_depth):
-            self.entities |= update_entities(self.entities, 5, self.player.ysub, self.player.prev_y)
+            self.entities |= update_entities(self.entities, self.level, self.player.ysub, self.player.prev_y)
         else:
             self.entities.clear()
 
