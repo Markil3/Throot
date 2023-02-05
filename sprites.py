@@ -1,4 +1,5 @@
-from random import randint
+import math
+from random import randrange, random
 
 import thumby
 
@@ -101,7 +102,7 @@ class Obstacle(Entity):
         return self.can_render(current_depth)
 
 
-def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth: int):
+def update_entities(entities, difficulty: int, current_depth: int, prev_depth: int):
     """
     Checks the current game state and generates new sprites based on said state.
 
@@ -118,24 +119,28 @@ def update_entities(current_slice: ObstacleSlice, current_depth: int, prev_depth
     :return:
         A list of entities to generate this tick.
     """
+    
+    OBSTACLE_BUFFER = 10
+    
     if current_depth == prev_depth:
         # If we haven't moved, we don't need to spawn anything
         return set()
-    # Local y relative to the top of the slice
-    slice_y = (current_depth) % ObstacleSlice.height
-    slice_prev_y = (prev_depth) % ObstacleSlice.height
-    if prev_depth < current_depth and slice_prev_y > slice_y:
-        slice_prev_y -= ObstacleSlice.height
-    elif current_depth < prev_depth and slice_y > slice_prev_y:
-        slice_prev_y += ObstacleSlice.height
-    min_y = min(slice_prev_y, slice_y)
-    max_y = max(slice_prev_y, slice_y)
+        
     spawned = set()
-    for entity in current_slice.obstacle_map:
-        # The position the entity should spawn at, relative to the slice top
-        entity_y = entity[1]
-        if entity_y >= min_y and entity_y < max_y:
-            sprite_image = OBSTACLES[entity[2]]
-            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, entity[3], entity[4])
-            spawned.add(Obstacle(entity[0], entity_y + current_depth // ObstacleSlice.height * ObstacleSlice.height, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
+    max_spawned = randrange(0, difficulty + 1)
+    while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty, 2)) / (3 * math.pow(difficulty, 2) + 20 * difficulty):
+        sprite_image = OBSTACLES[randrange(0, len(OBSTACLES))]
+        if sprite_image.width >= thumby.display.width:
+            x = 0
+        else:
+            x = randrange(0, thumby.display.width - sprite_image.width)
+        y = current_depth
+        error = False
+        for entity in entities | spawned:
+            if x > (entity.x - OBSTACLE_BUFFER) and x <= (entity.x + entity.width + OBSTACLE_BUFFER) and y > (entity.y - OBSTACLE_BUFFER) and y <= (entity.y + entity.height + OBSTACLE_BUFFER):
+                error = True
+                break
+        if not error:
+            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
+            spawned.add(Obstacle(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned

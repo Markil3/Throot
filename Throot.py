@@ -109,7 +109,7 @@ class GameLoop(Room):
         self.player.update_phys(self.current_depth, prev_depth)
 
         # Generate new entities as needed
-        self.entities |= update_entities(self.current_obstacle_slice, self.current_depth, prev_depth)
+        self.entities |= update_entities(self.entities, 5, self.current_depth, prev_depth)
 
         # Updates the entities
         to_remove = set()
