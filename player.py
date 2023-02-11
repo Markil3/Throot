@@ -2,19 +2,21 @@ import time
 import thumby
 import math
 import random
+from collections import namedtuple
 
 from Games.Throot.constants import CONST_FPS
 
 # didplay width 72
 # display height 40
 
-# constants
+### constants
 CONST_PL_SCREEN_Y =  int((0.5) * thumby.display.height)
 
 CONST_INP_MOVE_LEFT = thumby.buttonL
 CONST_INP_MOVE_RIGHT = thumby.buttonA
+CONST_INP_MOVE_RIGHT_ALT = thumby.buttonR
 
-# classes
+### classes
 class Player:
     def __init__(self):
         self.prev_x = 0
@@ -32,7 +34,7 @@ class Player:
         self.accx = 1 / (CONST_FPS * 4)
         self.accaccx = self.accx
         
-        self.anim = PlayerAnimation(self.x, self.y)
+        self.anim = PlayerAnimation(self)
         self.debugvisible = False
         
     def update_phys(self, tpf, camera: Camera):
@@ -41,7 +43,7 @@ class Player:
         inp = int(0)
         if CONST_INP_MOVE_LEFT.pressed():
             inp -= 1
-        if CONST_INP_MOVE_RIGHT.pressed():
+        if CONST_INP_MOVE_RIGHT.pressed() or CONST_INP_MOVE_RIGHT_ALT.pressed():
             inp += 1
         
         # debug visible
@@ -70,7 +72,7 @@ class Player:
         self.y = int(self.ysub)
         
         # animation
-        self.anim.update_phys(self.x, self.y, camera)
+        self.anim.update_phys(camera)
         
     def update_draw(self, camera):
         # debug draw
@@ -103,44 +105,61 @@ class Camera:
 
 
 class PlayerAnimation:
-    # width and height of range bounding box must be odd
-    RANDOM_RANGE = int(5)
-    POS_RANGE = int(3)
-    POS_X = int(0)
-    POS_Y = int(1)
+    MAX_ROOT_OFFSET = int(2)
     
-    def __init__(self, plworldx, plworldy):
-        self.poslist = [(plworldx, plworldy)]
-        self.debugrandomrange = self.RANDOM_RANGE
-        self.debugposrange = self.POS_RANGE
+    MAX_GROW_DISTANCE = int(5)#int(3)
+    MIN_GROW_DISTANCE = int(1)
     
-    def update_phys(self, plworldx, plworldy, camera):
-            
-        if plworldy < self.poslist[-1][self.POS_Y] + self.POS_RANGE:
-            return
+    Point = namedtuple("Point", ["x", "y"])
+
+    def __init__(self, player):
+        self.player = player
         
-        ### get new position
-        rad = self.RANDOM_RANGE // 2
+        self.root_offset = self.MAX_ROOT_OFFSET
+        self.grow_distance = self.MAX_GROW_DISTANCE
         
-        # move last pos
-        self.poslist[-1] = (
-            plworldx + random.randrange(-rad, rad), 
-            plworldy + random.randrange(-rad, rad)
+        self.points = []
+        self.add_point()
+        
+    def add_point(self):
+        self.points.append(self.Point(self.player.x, self.player.y))
+    
+    def update_phys(self, camera):
+        
+        # exit if distance from player to last root point is less than gorw distance
+        dist_sqr = (
+            (self.player.x - self.points[-1].x) ** 2 +
+            (self.player.y - self.points[-1].y) ** 2
         )
         
-        # new pos is perfectly on player
-        self.poslist.append((plworldx, plworldy))
+        if dist_sqr < self.grow_distance ** 2:
+            return
         
-        ### remove the fist item in the list if its full line is off screen
-        if not camera.entity_in_camera(self.poslist[1][self.POS_X], self.poslist[1][self.POS_Y]):
-            self.poslist.pop(0)
+        # set new grow distance
+        self.grow_distance = random.randint(self.MIN_GROW_DISTANCE, self.MAX_GROW_DISTANCE)
+        
+        # offset last root point to look random
+        self.points[-1] = self.Point(
+            self.points[-1].x + random.randrange(-self.root_offset, self.root_offset), 
+            self.points[-1].y + random.randrange(-self.root_offset, self.root_offset)
+        )
+        
+        # new root point created exactly on player
+        self.add_point()
+        
+        # remove points in list that would make lines off the camera
+        for point in self.points[1:]:
+            if camera.entity_in_camera(point.x, point.y):
+                break
+            
+            self.points.pop(0)
             
     def update_draw(self, camera, isdecend=1):
-        ### draw line from first position to next
         
-        for i in range(len(self.poslist) - 1):
-            x1, y1 = camera.relative_to_camera(self.poslist[i][self.POS_X], self.poslist[i][self.POS_Y])
-            x2, y2 = camera.relative_to_camera(self.poslist[i + 1][self.POS_X], self.poslist[i + 1][self.POS_Y])
+        # draw line from first position to next
+        for i in range(len(self.points) - 1):
+            x1, y1 = camera.relative_to_camera(self.points[i].x, self.points[i].y)
+            x2, y2 = camera.relative_to_camera(self.points[i + 1].x, self.points[i + 1].y)
             thumby.display.drawLine(
                 int(x1),
                 int(y1), 
