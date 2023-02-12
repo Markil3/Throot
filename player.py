@@ -9,12 +9,17 @@ from Games.Throot.constants import CONST_FPS
 # didplay width 72
 # display height 40
 
-### constants
-CONST_PL_SCREEN_Y =  int((0.5) * thumby.display.height)
-
-CONST_INP_MOVE_LEFT = thumby.buttonL
-CONST_INP_MOVE_RIGHT = thumby.buttonA
-CONST_INP_MOVE_RIGHT_ALT = thumby.buttonR
+class Input:
+    def move_right(self):
+        return (
+            thumby.buttonA.pressed() or
+            thumby.buttonR.pressed()
+        )
+        
+    def move_left(self):
+        return thumby.buttonL.pressed()
+        
+inp = Input()
 
 ### classes
 class Player:
@@ -26,61 +31,82 @@ class Player:
         self.x = int(self.xsub)
         self.y = int(self.ysub)
         
-        self.movespeed = 32 / CONST_FPS
         self.isdecend = 1
         
-        self.xspeed = 32 / CONST_FPS
-        self.yspeed = 32
-        self.accx = 1 / (CONST_FPS * 4)
-        self.accaccx = self.accx
+        self.input_x = float(0)
+        
+        self.speed_x_start = 32
+        self.speed_x_max = 200
+        self.acc_x_start = 64
+        self.jerk_x = 128
+        self.speed_x = self.speed_x_start
+        self.acc_x = self.acc_x_start
+        
+        # y speed is constant
+        self.speed_y = 16
         
         self.anim = PlayerAnimation(self)
         self.debugvisible = False
         
     def update_phys(self, tpf, camera: Camera):
+        # debug visible
+        if thumby.buttonB.justPressed():
+            self.debugvisible = not self.debugvisible
+            
+        # prevoius sub pixel position
         self.prev_x = self.xsub
         self.prev_y = self.ysub
-        inp = int(0)
-        if CONST_INP_MOVE_LEFT.pressed():
-            inp -= 1
-        if CONST_INP_MOVE_RIGHT.pressed() or CONST_INP_MOVE_RIGHT_ALT.pressed():
-            inp += 1
-        
-        # debug visible
-        if thumby.buttonU.pressed():
-            self.debugvisible = not self.debugvisible
         
         ### x movement
-        self.xspeed += self.accx
-        self.accx += self.accaccx
         
-        if (inp == 0) and (self.xspeed > self.movespeed):
-            self.xspeed = self.movespeed
-            self.accx = self.accaccx
+        # x input
+        if inp.move_left() and (not inp.move_right()):
+            self.input_x = -1
+            
+        if inp.move_right() and (not inp.move_left()):
+            self.input_x = 1
+            
+        if (not inp.move_left()) and (not inp.move_right()):
+            self.input_x = 0
         
-        xx = self.xsub + inp * self.xspeed
+        # acceleration and jerk
+        self.speed_x += self.acc_x * tpf
+        self.acc_x += self.jerk_x * tpf
         
-        # clamp to screen
-        self.xsub = max(min(xx, thumby.display.width - 1), 0)
+        # limit speed
+        self.speed_x = min(self.speed_x_max, self.speed_x)
+        
+        # reset speed and acceleration if no input
+        if (self.input_x == 0) and (self.speed_x != self.speed_x_start):
+            self.speed_x = self.speed_x_start
+            self.acc_x = self.acc_x_start
+            
+        # set x sub pixel position
+        self.xsub += self.speed_x * tpf * self.input_x
         
         ### y movement
         
-        self.ysub += self.yspeed * tpf
+        # set y sub pixel position
+        self.ysub += self.speed_y * tpf
+        
+        ### stay in world bounds
+        self.xsub = max(min(self.xsub, thumby.display.width - 1), 0)
         
         ### pixel positions
         self.x = int(self.xsub)
         self.y = int(self.ysub)
         
-        # animation
+        ### animation physics
         self.anim.update_phys(camera)
         
     def update_draw(self, camera):
-        # debug draw
+        # debug render
         if self.debugvisible:
             pix_x, pix_y = camera.relative_to_camera(self.x, self.y)
             thumby.display.setPixel(int(pix_x), int(pix_y), self.isdecend)
+            return
         
-        # animation
+        ### animation render
         self.anim.update_draw(camera, self.isdecend)
         
 
@@ -157,9 +183,12 @@ class PlayerAnimation:
     def update_draw(self, camera, isdecend=1):
         
         # draw line from first position to next
-        for i in range(len(self.points) - 1):
-            x1, y1 = camera.relative_to_camera(self.points[i].x, self.points[i].y)
-            x2, y2 = camera.relative_to_camera(self.points[i + 1].x, self.points[i + 1].y)
+        point_prev = self.points[-1]
+        for point in self.points[-2::-1]:
+            x1, y1 = camera.relative_to_camera(point_prev.x, point_prev.y)
+            x2, y2 = camera.relative_to_camera(point.x, point.y)
+            point_prev = point
+            
             thumby.display.drawLine(
                 int(x1),
                 int(y1), 
@@ -167,3 +196,13 @@ class PlayerAnimation:
                 int(y2),
                 isdecend
             )
+        # for i in range(len(self.points) - 1):
+        #     x1, y1 = camera.relative_to_camera(self.points[i].x, self.points[i].y)
+        #     x2, y2 = camera.relative_to_camera(self.points[i + 1].x, self.points[i + 1].y)
+        #     thumby.display.drawLine(
+        #         int(x1),
+        #         int(y1), 
+        #         int(x2),
+        #         int(y2),
+        #         isdecend
+        #     )
