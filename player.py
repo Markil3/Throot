@@ -35,10 +35,12 @@ class Player:
         
         self.input_x = float(0)
         
+        # constants
         self.speed_x_start = 32
         self.speed_x_max = 200
         self.acc_x_start = 64
         self.jerk_x = 128
+        
         self.speed_x = self.speed_x_start
         self.acc_x = self.acc_x_start
         
@@ -46,13 +48,9 @@ class Player:
         self.speed_y = 16
         
         self.anim = PlayerAnimation(self)
-        self.debugvisible = False
+        
         
     def update_phys(self, tpf, camera: Camera):
-        # debug visible
-        if thumby.buttonB.justPressed():
-            self.debugvisible = not self.debugvisible
-            
         # prevoius sub pixel position
         self.prev_x = self.xsub
         self.prev_y = self.ysub
@@ -100,12 +98,6 @@ class Player:
         self.anim.update_phys(camera)
         
     def update_draw(self, camera):
-        # debug render
-        if self.debugvisible:
-            pix_x, pix_y = camera.relative_to_camera(self.x, self.y)
-            thumby.display.setPixel(int(pix_x), int(pix_y), self.isdecend)
-            return
-        
         ### animation render
         self.anim.update_draw(camera, self.isdecend)
         
@@ -129,12 +121,11 @@ class Camera:
         # position player
         self.y = self.target.y + self.offset
 
-
 class PlayerAnimation:
-    MAX_ROOT_OFFSET = int(2)
+    MAX_ROOT_OFFSET = int(4)
     
-    MAX_GROW_DISTANCE = int(5)#int(3)
-    MIN_GROW_DISTANCE = int(1)
+    MAX_GROW_DISTANCE = int(6)#int(3)
+    MIN_GROW_DISTANCE = int(2)
     
     Point = namedtuple("Point", ["x", "y"])
 
@@ -147,11 +138,21 @@ class PlayerAnimation:
         self.points = []
         self.add_point()
         
+        self.debug_visible = False
+        self.debug_exact = True
+        
     def add_point(self):
         self.points.append(self.Point(self.player.x, self.player.y))
     
     def update_phys(self, camera):
-        
+        # debug visible
+        if thumby.buttonB.justPressed():
+            self.debug_visible = not self.debug_visible
+            
+        # debug exact
+        if thumby.buttonU.justPressed():
+            self.debug_exact = not self.debug_exact
+            
         # exit if distance from player to last root point is less than gorw distance
         dist_sqr = (
             (self.player.x - self.points[-1].x) ** 2 +
@@ -181,6 +182,23 @@ class PlayerAnimation:
             self.points.pop(0)
             
     def update_draw(self, camera, isdecend=1):
+        # debug render
+        if self.debug_visible:
+            pix_x, pix_y = camera.relative_to_camera(self.x, self.y)
+            thumby.display.setPixel(int(pix_x), int(pix_y), self.isdecend)
+            return
+        
+        # root always reaches player position
+        if self.debug_exact:
+            x1, y1 = camera.relative_to_camera(self.player.x, self.player.y)
+            x2, y2 = camera.relative_to_camera(self.points[-1].x, self.points[-1].y)
+            thumby.display.drawLine(
+                int(x1),
+                int(y1), 
+                int(x2),
+                int(y2),
+                isdecend
+            )
         
         # draw line from first position to next
         point_prev = self.points[-1]
@@ -196,13 +214,3 @@ class PlayerAnimation:
                 int(y2),
                 isdecend
             )
-        # for i in range(len(self.points) - 1):
-        #     x1, y1 = camera.relative_to_camera(self.points[i].x, self.points[i].y)
-        #     x2, y2 = camera.relative_to_camera(self.points[i + 1].x, self.points[i + 1].y)
-        #     thumby.display.drawLine(
-        #         int(x1),
-        #         int(y1), 
-        #         int(x2),
-        #         int(y2),
-        #         isdecend
-        #     )
