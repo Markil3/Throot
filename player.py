@@ -184,8 +184,8 @@ class PlayerAnimation:
     def update_draw(self, camera, isdecend=1):
         # debug render
         if self.debug_visible:
-            pix_x, pix_y = camera.relative_to_camera(self.x, self.y)
-            thumby.display.setPixel(int(pix_x), int(pix_y), self.isdecend)
+            pix_x, pix_y = camera.relative_to_camera(self.player.x, self.player.y)
+            thumby.display.setPixel(int(pix_x), int(pix_y), isdecend)
             return
         
         # root always reaches player position
