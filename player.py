@@ -174,12 +174,13 @@ class PlayerAnimation:
         # new root point created exactly on player
         self.add_point()
         
-        # remove points in list that would make lines off the camera
-        for point in self.points[1:]:
-            if camera.entity_in_camera(point.x, point.y):
-                break
+        # points are not removed so the camera can pan back up
+        # # remove points in list that would render lines off the camera
+        # for point in self.points[1:]:
+        #     if camera.entity_in_camera(point.x, point.y):
+        #         break
             
-            self.points.pop(0)
+        #     self.points.pop(0)
             
     def update_draw(self, camera, isdecend=1):
         # debug render
@@ -188,7 +189,7 @@ class PlayerAnimation:
             thumby.display.setPixel(int(pix_x), int(pix_y), isdecend)
             return
         
-        # root always reaches player position
+        # draw line from last point to player
         if self.debug_exact:
             x1, y1 = camera.relative_to_camera(self.player.x, self.player.y)
             x2, y2 = camera.relative_to_camera(self.points[-1].x, self.points[-1].y)
@@ -199,10 +200,18 @@ class PlayerAnimation:
                 int(y2),
                 isdecend
             )
-        
-        # draw line from first position to next
+
+        # draw line from last point to previous
+        point_off_camera_count = 2
         point_prev = self.points[-1]
         for point in self.points[-2::-1]:
+            
+            # break if entire line is off camera
+            if not camera.entity_in_camera(point.x, point.y):
+                point_off_camera_count -= 1
+                if point_off_camera_count <= 0:
+                    break
+            
             x1, y1 = camera.relative_to_camera(point_prev.x, point_prev.y)
             x2, y2 = camera.relative_to_camera(point.x, point.y)
             point_prev = point
