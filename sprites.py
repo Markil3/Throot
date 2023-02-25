@@ -72,7 +72,7 @@ class Entity:
     def render(self, tpf: float, camera: Camera) -> bool:
         """
         Sets the position of the sprite and draws it.
-        
+
         :param tpf:
             The number of seconds since the last tick.
         :param current_depth:
@@ -93,7 +93,7 @@ class Entity:
                 return True
         return False
 
-class Obstacle(Entity):    
+class Obstacle(Entity):
     def update(self, tpf: float, player: Player, camera: Camera) -> bool:
         return True
 
@@ -101,7 +101,7 @@ class Collectible(Entity):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.score = 'score' in kwargs and kwargs['score'] or 10
-        
+
     def update(self, tpf: float, player: Player, camera: Camera) -> bool:
         return True
 
@@ -123,25 +123,33 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
     :return:
         A list of entities to generate this tick.
     """
-    
+
     OBSTACLE_BUFFER = 10
-    
+
     if current_depth == prev_depth:
         # If we haven't moved, we don't need to spawn anything
         return set()
-        
+
     spawned = set()
-    max_spawned = randrange(0, difficulty + 1)
-    while len(spawned) < max_spawned and random() < (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
-        if random() < 0.2:
-            Clazz = Collectible
-            if current_depth >= 0:
-                sprite_image = collectibleunder
-            else:
-                sprite_image = collectibleover
-        else:
+    if current_depth > 0:
+        max_spawned = randrange(0, difficulty + 1)
+    else:
+        max_spawned = randrange(0, int(5 / (0.3 * difficulty + 0.7)))
+    print(f"Spawning {max_spawned} entities this tick")
+    while len(spawned) < max_spawned:
+        if current_depth > 0:
+            if random() >= (2 * math.pow(difficulty + 0.01, 2)) / (3 * math.pow(difficulty + 0.01, 2) + 20 * (difficulty + 0.01)) + 0.05:
+                print(f"Cancelling obstacles after {len(spawned)} entities")
+                break
             Clazz = Obstacle
             sprite_image = OBSTACLES[randrange(0, min((difficulty + 1) * 3, len(OBSTACLES)))]
+        else:
+            if random() >= 1 / (math.pow(difficulty, 2) + 3):
+                print(f"Cancelling obstacles after {len(spawned)} entities")
+                break
+            Clazz = Collectible
+            sprite_image = collectibleover
+
         if sprite_image.width >= thumby.display.width:
             x = 0
         else:
@@ -157,6 +165,6 @@ def update_entities(entities, difficulty: int, current_depth: int, prev_depth: i
                 error = True
                 break
         if not error:
-            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, 0, False, False)
+            sprite = thumby.Sprite(sprite_image.width, sprite_image.height, sprite_image.image, 0, 0, int(y < 0), False, False)
             spawned.add(Clazz(x, y, sprite_image.width, sprite_image.height, sprite_image.collision or sprite_image.image, sprite))
     return spawned

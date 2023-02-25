@@ -261,7 +261,7 @@ class GameLoop(Room):
 
         self.draw_water()
 
-        thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, 1)
+        thumby.display.drawText(str(self.score), thumby.display.width - (len(str(self.score)) + 2) * 5, 1, int(self.player.y > 0))
 
 
 class EndRoom(Room):
